@@ -29,7 +29,7 @@ class UserController extends AbstractController
 
         return $this->json(
             [
-            'message' => 'User created successfully',
+            'message' => 'This User was created successfully',
             'id' => $user->getId(),
             'email' => $user->getEmail(),
             'stored_password' => $user->getPassword()

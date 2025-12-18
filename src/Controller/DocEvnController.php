@@ -3,19 +3,23 @@
 namespace App\Controller;
 
 use App\Entity\Product;
+use App\Message\GeneratePdfMessage;
 use App\Repository\ProductRepository;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
+#[Route('/api')]
 class DocEvnController extends AbstractController
 {
     #[Route('/create', name: 'create_product', methods: ['POST'])]
     public function createProduct(
         Request $request,
-        EntityManagerInterface $entityManager
+        EntityManagerInterface $entityManager,
+        MessageBusInterface $bus
     ): JsonResponse {
 
         $data = $request->toArray();
@@ -27,6 +31,8 @@ class DocEvnController extends AbstractController
 
         $entityManager->persist($product);
         $entityManager->flush();
+
+        $bus->dispatch(new GeneratePdfMessage($product->getId()));
 
         return $this->json(
             [
@@ -112,6 +118,8 @@ class DocEvnController extends AbstractController
         if (!$product) {
             return $this->json(['error' => 'Product not found'], 404);
         }
+
+        $this->denyAccessUnlessGranted('PRODUCT_DELETE', $product);
 
         $entityManager->remove($product);
 
